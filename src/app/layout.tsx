@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Todo App",
@@ -12,9 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-TW">
-      <body style={{ margin: 0, fontFamily: "system-ui, sans-serif" }}>
-        {children}
-      </body>
+      <body className="m-0 font-sans">{children}</body>
     </html>
   );
 }
