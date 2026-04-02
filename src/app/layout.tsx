@@ -13,7 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-TW">
-      <body className="m-0 font-sans">{children}</body>
+      <body className="m-0 font-sans antialiased">{children}</body>
     </html>
   );
 }
