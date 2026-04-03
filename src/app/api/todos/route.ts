@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 
 // GET - 取得所有待辦事項
 export async function GET() {
+  const supabase = getSupabase();
   const { data, error } = await supabase
     .from("todos")
     .select("*")
@@ -16,6 +17,7 @@ export async function GET() {
 
 // POST - 新增待辦事項
 export async function POST(request: NextRequest) {
+  const supabase = getSupabase();
   const body = await request.json();
   const text = body.text?.trim();
   if (!text) {
@@ -36,6 +38,7 @@ export async function POST(request: NextRequest) {
 
 // PATCH - 切換完成或星號狀態
 export async function PATCH(request: NextRequest) {
+  const supabase = getSupabase();
   const body = await request.json();
 
   // 先取得目前的值
@@ -69,6 +72,7 @@ export async function PATCH(request: NextRequest) {
 
 // DELETE - 刪除待辦事項
 export async function DELETE(request: NextRequest) {
+  const supabase = getSupabase();
   const body = await request.json();
 
   const { data, error } = await supabase
