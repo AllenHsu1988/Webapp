@@ -13,13 +13,25 @@ export default function Home() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showCompleted, setShowCompleted] = useState(true);
 
   const fetchTodos = async () => {
-    const res = await fetch("/api/todos");
-    const data = await res.json();
-    setTodos(data);
-    setLoading(false);
+    try {
+      const res = await fetch("/api/todos");
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Failed to fetch todos");
+        setLoading(false);
+        return;
+      }
+      setTodos(data);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Network error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -95,6 +107,16 @@ export default function Home() {
         {loading ? (
           <div className="flex justify-center pt-20">
             <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center pt-20 gap-3">
+            <p className="text-white/80 text-base text-center px-4">{error}</p>
+            <button
+              className="text-white underline text-sm"
+              onClick={() => { setLoading(true); setError(null); fetchTodos(); }}
+            >
+              Retry
+            </button>
           </div>
         ) : (
           <>
