@@ -1,23 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-
-interface Todo {
-  id: number;
-  text: string;
-  completed: boolean;
-  starred: boolean;
-}
-
-// In-memory store (resets on redeploy — for demo purposes)
-let todos: Todo[] = [
-  { id: 1, text: "Task1", completed: false, starred: false },
-  { id: 2, text: "Task2", completed: true, starred: true },
-  { id: 3, text: "Task3", completed: false, starred: false },
-];
-let nextId = 4;
+import { supabase } from "@/lib/supabase";
 
 // GET - 取得所有待辦事項
 export async function GET() {
-  return NextResponse.json(todos);
+  const { data, error } = await supabase
+    .from("todos")
+    .select("*")
+    .order("id", { ascending: true });
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+  return NextResponse.json(data);
 }
 
 // POST - 新增待辦事項
@@ -27,33 +21,65 @@ export async function POST(request: NextRequest) {
   if (!text) {
     return NextResponse.json({ error: "text is required" }, { status: 400 });
   }
-  const todo: Todo = { id: nextId++, text, completed: false, starred: false };
-  todos.push(todo);
-  return NextResponse.json(todo, { status: 201 });
+
+  const { data, error } = await supabase
+    .from("todos")
+    .insert({ text, completed: false, starred: false })
+    .select()
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+  return NextResponse.json(data, { status: 201 });
 }
 
 // PATCH - 切換完成或星號狀態
 export async function PATCH(request: NextRequest) {
   const body = await request.json();
-  const todo = todos.find((t) => t.id === body.id);
-  if (!todo) {
+
+  // 先取得目前的值
+  const { data: todo, error: fetchError } = await supabase
+    .from("todos")
+    .select("*")
+    .eq("id", body.id)
+    .single();
+
+  if (fetchError || !todo) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
-  if (body.field === "starred") {
-    todo.starred = !todo.starred;
-  } else {
-    todo.completed = !todo.completed;
+
+  const updateField =
+    body.field === "starred"
+      ? { starred: !todo.starred }
+      : { completed: !todo.completed };
+
+  const { data, error } = await supabase
+    .from("todos")
+    .update(updateField)
+    .eq("id", body.id)
+    .select()
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
-  return NextResponse.json(todo);
+  return NextResponse.json(data);
 }
 
 // DELETE - 刪除待辦事項
 export async function DELETE(request: NextRequest) {
   const body = await request.json();
-  const index = todos.findIndex((t) => t.id === body.id);
-  if (index === -1) {
-    return NextResponse.json({ error: "not found" }, { status: 404 });
+
+  const { data, error } = await supabase
+    .from("todos")
+    .delete()
+    .eq("id", body.id)
+    .select()
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
-  const [deleted] = todos.splice(index, 1);
-  return NextResponse.json(deleted);
+  return NextResponse.json(data);
 }
